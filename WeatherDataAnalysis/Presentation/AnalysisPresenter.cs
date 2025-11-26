@@ -19,37 +19,49 @@ namespace WeatherDataAnalysis.Presentation
 
         public void ShowOutdoorAnalyses()
         {
-            var firstDate = GetFirstDateForLocation("Ute");
-            if (!firstDate.HasValue)
-            {
-                AnsiConsole.MarkupLine("[red]Ingen utomhusdata hittades![/]");
-                return;
-            }
-
-            ShowSectionHeader("UTOMHUSANALYS", Color.Blue);
-
-            ShowAverageTemperature(firstDate.Value, "Ute");
-            ShowTopDays("VARMASTE DAGARNA", _analysisService.SortByTemperature("Ute").Take(5), d => $"{d.AvgTemp:F1}°C", Color.Orange1);
-            ShowTopDays("KALLASTE DAGARNA", _analysisService.SortByTemperature("Ute").TakeLast(5).Reverse(), d => $"{d.AvgTemp:F1}°C", Color.Blue);
-            ShowTopDays("TORRASTE DAGARNA", _analysisService.SortByHumidity("Ute").Take(5), d => $"{d.AvgHumidity:F1}%", Color.Yellow);
-            ShowTopDays("FUKTIGASTE DAGARNA", _analysisService.SortByHumidity("Ute").TakeLast(5).Reverse(), d => $"{d.AvgHumidity:F1}%", Color.Aqua);
-            ShowTopDays("HÖGST MÖGELRISK", _analysisService.SortByMoldRisk("Ute").TakeLast(5).Reverse(), d => $"Risk: {d.MoldRisk:F1}", Color.Red);
-            ShowTopDays("LÄGST MÖGELRISK", _analysisService.SortByMoldRisk("Ute").Take(5), d => $"Risk: {d.MoldRisk:F1}", Color.Green);
-            ShowMeteorologicalSeasons();
+            ShowLocationAnalyses("Ute", "UTOMHUSANALYS", Color.Blue, showSeasons: true, showDriest: true, showLowestMold: true);
         }
 
         public void ShowIndoorAnalyses()
         {
-            var firstDate = GetFirstDateForLocation("Inne");
-            if (!firstDate.HasValue) return;
+            ShowLocationAnalyses("Inne", "INOMHUSANALYS", Color.Green, showSeasons: false, showDriest: false, showLowestMold: false);
+        }
 
-            ShowSectionHeader("INOMHUSANALYS", Color.Green);
+        private void ShowLocationAnalyses(string location, string header, Color headerColor,
+                                         bool showSeasons, bool showDriest, bool showLowestMold)
+        {
+            var firstDate = GetFirstDateForLocation(location);
+            if (!firstDate.HasValue)
+            {
+                AnsiConsole.MarkupLine($"[red]Ingen data hittades för {location}![/]");
+                return;
+            }
 
-            ShowAverageTemperature(firstDate.Value, "Inne");
-            ShowTopDays("VARMASTE DAGARNA INOMHUS", _analysisService.SortByTemperature("Inne").Take(5), d => $"{d.AvgTemp:F1}°C", Color.Orange1);
-            ShowTopDays("KALLASTE DAGARNA INOMHUS", _analysisService.SortByTemperature("Inne").TakeLast(5).Reverse(), d => $"{d.AvgTemp:F1}°C", Color.Blue);
-            ShowTopDays("FUKTIGASTE DAGARNA INOMHUS", _analysisService.SortByHumidity("Inne").TakeLast(5).Reverse(), d => $"{d.AvgHumidity:F1}%", Color.Aqua);
-            ShowTopDays("HÖGST MÖGELRISK INOMHUS", _analysisService.SortByMoldRisk("Inne").TakeLast(5).Reverse(), d => $"Risk: {d.MoldRisk:F1}", Color.Red);
+            ShowSectionHeader(header, headerColor);
+            ShowAverageTemperature(firstDate.Value, location);
+
+            var suffix = location == "Inne" ? " INOMHUS" : "";
+
+            ShowTopDays($"VARMASTE DAGARNA{suffix}", _analysisService.SortByTemperature(location).Take(5),
+                       d => $"{d.AvgTemp:F1}°C", Color.Orange1);
+            ShowTopDays($"KALLASTE DAGARNA{suffix}", _analysisService.SortByTemperature(location).TakeLast(5).Reverse(),
+                       d => $"{d.AvgTemp:F1}°C", Color.Blue);
+
+            if (showDriest)
+                ShowTopDays("TORRASTE DAGARNA", _analysisService.SortByHumidity(location).Take(5),
+                           d => $"{d.AvgHumidity:F1}%", Color.Yellow);
+
+            ShowTopDays($"FUKTIGASTE DAGARNA{suffix}", _analysisService.SortByHumidity(location).TakeLast(5).Reverse(),
+                       d => $"{d.AvgHumidity:F1}%", Color.Aqua);
+            ShowTopDays($"HÖGST MÖGELRISK{suffix}", _analysisService.SortByMoldRisk(location).TakeLast(5).Reverse(),
+                       d => $"Risk: {d.MoldRisk:F1}", Color.Red);
+
+            if (showLowestMold)
+                ShowTopDays("LÄGST MÖGELRISK", _analysisService.SortByMoldRisk(location).Take(5),
+                           d => $"Risk: {d.MoldRisk:F1}", Color.Green);
+
+            if (showSeasons)
+                ShowMeteorologicalSeasons();
         }
 
         public void ShowBalconyDoorAnalysis()
@@ -146,6 +158,7 @@ namespace WeatherDataAnalysis.Presentation
             }
             AnsiConsole.WriteLine();
         }
+
         private DateTime? GetFirstDateForLocation(string location)
         {
             var dates = _context.Measurements

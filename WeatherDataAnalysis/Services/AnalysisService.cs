@@ -1,4 +1,8 @@
-﻿using WeatherDataAnalysis.Data;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using WeatherDataAnalysis.Data;
+using WeatherDataAnalysis.Models;
 
 namespace WeatherDataAnalysis.Services
 {
@@ -19,6 +23,7 @@ namespace WeatherDataAnalysis.Services
         public DateTime Date { get; set; }
         public double MoldRisk { get; set; }
     }
+
     public class AnalysisService
     {
         private readonly WeatherDataContext _context;
@@ -87,7 +92,7 @@ namespace WeatherDataAnalysis.Services
                     AvgTemp = g.Average(m => m.Temperature!.Value),
                     AvgHumidity = g.Average(m => m.Humidity!.Value)
                 })
-                .ToList(); 
+                .ToList();
 
             return dailyData
                 .Select(x => new DayMoldRisk
@@ -101,39 +106,15 @@ namespace WeatherDataAnalysis.Services
 
         public DateTime? FindMeteorologicalAutumn()
         {
-            var dailyAvgTemp = _context.Measurements
-                .Where(m => m.Location == "Ute" && m.Temperature.HasValue)
-                .GroupBy(m => m.Date.Date)
-                .Select(g => new
-                {
-                    Date = g.Key,
-                    AvgTemp = g.Average(m => m.Temperature!.Value)
-                })
-                .OrderBy(x => x.Date)
-                .ToList();
-
-            for (int i = 0; i <= dailyAvgTemp.Count - 5; i++)
-            {
-                bool autumnFound = true;
-                for (int j = 0; j < 5; j++)
-                {
-                    if (dailyAvgTemp[i + j].AvgTemp >= 10)
-                    {
-                        autumnFound = false;
-                        break;
-                    }
-                }
-
-                if (autumnFound)
-                {
-                    return dailyAvgTemp[i].Date;
-                }
-            }
-
-            return null;
+            return FindMeteorologicalSeason(temperatureThreshold: 10);
         }
 
         public DateTime? FindMeteorologicalWinter()
+        {
+            return FindMeteorologicalSeason(temperatureThreshold: 0);
+        }
+
+        private DateTime? FindMeteorologicalSeason(double temperatureThreshold)
         {
             var dailyAvgTemp = _context.Measurements
                 .Where(m => m.Location == "Ute" && m.Temperature.HasValue)
@@ -148,20 +129,18 @@ namespace WeatherDataAnalysis.Services
 
             for (int i = 0; i <= dailyAvgTemp.Count - 5; i++)
             {
-                bool winterFound = true;
+                bool seasonFound = true;
                 for (int j = 0; j < 5; j++)
                 {
-                    if (dailyAvgTemp[i + j].AvgTemp >= 0)
+                    if (dailyAvgTemp[i + j].AvgTemp >= temperatureThreshold)
                     {
-                        winterFound = false;
+                        seasonFound = false;
                         break;
                     }
                 }
 
-                if (winterFound)
-                {
+                if (seasonFound)
                     return dailyAvgTemp[i].Date;
-                }
             }
 
             return null;

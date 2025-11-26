@@ -1,4 +1,7 @@
-﻿using WeatherDataAnalysis.Data;
+﻿using System;
+using System.IO;
+using System.Linq;
+using WeatherDataAnalysis.Data;
 using WeatherDataAnalysis.Services;
 using WeatherDataAnalysis.Presentation;
 using Spectre.Console;
@@ -25,9 +28,9 @@ namespace WeatherDataAnalysis
         static void DisplayHeader()
         {
             Console.Clear();
-            var title = new Rule($"[bold blue]Vaderanalys[/]")
-                    .RuleStyle("blue")
-                    .Centered();
+            var title = new Rule("[bold blue]Vaderanalys[/]")
+                .RuleStyle("blue")
+                .Centered();
             AnsiConsole.Write(title);
             AnsiConsole.MarkupLine("[grey]Temperatur och Luftfuktighets Analyssystem[/]\n");
         }
@@ -83,43 +86,35 @@ namespace WeatherDataAnalysis
 
         static void ShowMenu(AnalysisPresenter presenter)
         {
+            var menuOptions = new[] {
+                "1. Utomhusanalys (Alla 6 analyser)",
+                "2. Inomhusanalys (Alla 4 analyser)",
+                "3. Balkongdörr-analys",
+                "4. Temperaturskillnads-analys",
+                "5. Kör ALLA analyser",
+                "6. Avsluta"
+            };
+
             while (true)
             {
                 Console.Clear();
-                AnsiConsole.Write(
-                new Rule($"[bold blue]VÄDERDATA ANALYSSYSTEM - MENY[/]")
-                    .RuleStyle("blue")
-                    .Centered());
+                AnsiConsole.Write(new Rule("[bold blue]VÄDERDATA ANALYSSYSTEM - MENY[/]")
+                    .RuleStyle("blue").Centered());
 
                 var choice = AnsiConsole.Prompt(
                     new SelectionPrompt<string>()
                         .Title("[cyan]Vad vill du analysera?[/]")
                         .PageSize(10)
-                        .AddChoices(new[] {
-                            "1. Utomhusanalys (Alla 6 analyser)",
-                            "2. Inomhusanalys (Alla 4 analyser)",
-                            "3. Balkongdörr-analys",
-                            "4. Temperaturskillnads-analys",
-                            "5. Kör ALLA analyser",
-                            "6. Avsluta"
-                        }));
+                        .AddChoices(menuOptions));
 
                 Console.Clear();
 
                 switch (choice[0])
                 {
-                    case '1':
-                        presenter.ShowOutdoorAnalyses();
-                        break;
-                    case '2':
-                        presenter.ShowIndoorAnalyses();
-                        break;
-                    case '3':
-                        presenter.ShowBalconyDoorAnalysis();
-                        break;
-                    case '4':
-                        presenter.ShowTemperatureDifferenceAnalysis();
-                        break;
+                    case '1': presenter.ShowOutdoorAnalyses(); break;
+                    case '2': presenter.ShowIndoorAnalyses(); break;
+                    case '3': presenter.ShowBalconyDoorAnalysis(); break;
+                    case '4': presenter.ShowTemperatureDifferenceAnalysis(); break;
                     case '5':
                         presenter.ShowOutdoorAnalyses();
                         presenter.ShowIndoorAnalyses();
