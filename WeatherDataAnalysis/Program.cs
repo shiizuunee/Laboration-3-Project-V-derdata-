@@ -24,34 +24,36 @@ namespace WeatherDataAnalysis
 
         static void DisplayHeader()
         {
-            var title = new Rule("WEATHER ANALYSIS")
-                .RuleStyle("blue")
-                .Centered();
-
+            Console.Clear();
+            var title = new Rule($"[bold blue]Vaderanalys[/]")
+                    .RuleStyle("blue")
+                    .Centered();
             AnsiConsole.Write(title);
-            AnsiConsole.MarkupLine("[grey]Temperature and Humidity Data Analysis System[/]\n");
+            AnsiConsole.MarkupLine("[grey]Temperatur och Luftfuktighets Analyssystem[/]\n");
         }
 
         static void InitializeDatabase(WeatherDataContext context)
         {
-            AnsiConsole.Status().Start("Checking database...", ctx =>
-            {
-                context.Database.EnsureCreated();
-                ctx.Status("Database ready");
-            });
-
-            AnsiConsole.MarkupLine("[green]Database ready: WeatherData.db[/]");
+            AnsiConsole.MarkupLine("[blue]Kontrollerar databas...[/]");
+            context.Database.EnsureCreated();
+            AnsiConsole.MarkupLine("  [green]Databas redo: WeatherData.db[/]\n");
 
             var measurementCount = context.Measurements.Count();
 
             if (measurementCount == 0)
             {
-                AnsiConsole.MarkupLine("[yellow]Database is empty. Importing CSV data...[/]");
+                AnsiConsole.MarkupLine("  [yellow]Databasen är tom. Importerar CSV-data...[/]");
                 ImportCsvData(context);
                 measurementCount = context.Measurements.Count();
+                AnsiConsole.MarkupLine($"  [green]Importerade {measurementCount:N0} mätningar[/]\n");
+            }
+            else
+            {
+                AnsiConsole.MarkupLine($"  [green]Databasen innehåller {measurementCount:N0} mätningar[/]\n");
             }
 
-            AnsiConsole.MarkupLine($"[green]Database contains {measurementCount:N0} measurements[/]\n");
+            AnsiConsole.MarkupLine("[grey]Tryck på valfri tangent för att fortsätta...[/]");
+            Console.ReadKey();
         }
 
         static void ImportCsvData(WeatherDataContext context)
@@ -60,25 +62,23 @@ namespace WeatherDataAnalysis
 
             if (!File.Exists(csvPath))
             {
-                AnsiConsole.MarkupLine($"[red]Could not find {csvPath}[/]");
+                AnsiConsole.MarkupLine($"  [red]Kunde inte hitta {csvPath}[/]");
                 return;
             }
 
-            AnsiConsole.Status().Start("Reading CSV file...", ctx =>
+            AnsiConsole.MarkupLine("  [blue]Läser CSV-fil...[/]");
+            var csvService = new CsvImportService();
+            var measurements = csvService.ImportCsvFile(csvPath);
+
+            if (measurements.Count == 0)
             {
-                var csvService = new CsvImportService();
-                var measurements = csvService.ImportCsvFile(csvPath);
+                AnsiConsole.MarkupLine("  [red]Inga mätningar importerades[/]");
+                return;
+            }
 
-                if (measurements.Count == 0)
-                {
-                    AnsiConsole.MarkupLine("[red]No measurements imported[/]");
-                    return;
-                }
-
-                ctx.Status("Saving to database...");
-                context.Measurements.AddRange(measurements);
-                context.SaveChanges();
-            });
+            AnsiConsole.MarkupLine("  [blue]Sparar till databasen...[/]");
+            context.Measurements.AddRange(measurements);
+            context.SaveChanges();
         }
 
         static void ShowMenu(AnalysisPresenter presenter)
@@ -86,19 +86,22 @@ namespace WeatherDataAnalysis
             while (true)
             {
                 Console.Clear();
-                DisplayHeader();
+                AnsiConsole.Write(
+                new Rule($"[bold blue]VÄDERDATA ANALYSSYSTEM - MENY[/]")
+                    .RuleStyle("blue")
+                    .Centered());
 
                 var choice = AnsiConsole.Prompt(
                     new SelectionPrompt<string>()
-                        .Title("[cyan]What would you like to analyze?[/]")
+                        .Title("[cyan]Vad vill du analysera?[/]")
                         .PageSize(10)
                         .AddChoices(new[] {
-                            "1. All Outdoor Analysis",
-                            "2. All Indoor Analysis",
-                            "3. Balcony Door Analysis",
-                            "4. Temperature Difference Analysis",
-                            "5. Run ALL Analyses",
-                            "6. Exit"
+                            "1. Utomhusanalys (Alla 6 analyser)",
+                            "2. Inomhusanalys (Alla 4 analyser)",
+                            "3. Balkongdörr-analys",
+                            "4. Temperaturskillnads-analys",
+                            "5. Kör ALLA analyser",
+                            "6. Avsluta"
                         }));
 
                 Console.Clear();
@@ -124,12 +127,12 @@ namespace WeatherDataAnalysis
                         presenter.ShowTemperatureDifferenceAnalysis();
                         break;
                     case '6':
-                        AnsiConsole.MarkupLine("[yellow]Exiting...[/]");
+                        AnsiConsole.MarkupLine("\n[yellow]Avslutar programmet...[/]");
                         return;
                 }
 
                 AnsiConsole.WriteLine();
-                AnsiConsole.MarkupLine("[grey]Press any key to return to menu...[/]");
+                AnsiConsole.MarkupLine("[grey]Tryck på valfri tangent för att återgå till menyn...[/]");
                 Console.ReadKey();
             }
         }

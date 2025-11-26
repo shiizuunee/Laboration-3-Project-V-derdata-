@@ -1,4 +1,6 @@
-﻿using WeatherDataAnalysis.Data;
+﻿using System;
+using System.Linq;
+using WeatherDataAnalysis.Data;
 using WeatherDataAnalysis.Services;
 using Spectre.Console;
 
@@ -20,19 +22,19 @@ namespace WeatherDataAnalysis.Presentation
             var firstDate = GetFirstDateForLocation("Ute");
             if (!firstDate.HasValue)
             {
-                AnsiConsole.MarkupLine("[red]No outdoor data found![/]");
+                AnsiConsole.MarkupLine("[red]Ingen utomhusdata hittades![/]");
                 return;
             }
 
-            ShowSectionHeader("OUTDOOR ANALYSIS", Color.Blue);
+            ShowSectionHeader("UTOMHUSANALYS", Color.Blue);
 
             ShowAverageTemperature(firstDate.Value, "Ute");
-            ShowTopDays("WARMEST", _analysisService.SortByTemperature("Ute").Take(5), d => $"{d.AvgTemp:F1}°C", Color.Orange1);
-            ShowTopDays("COLDEST", _analysisService.SortByTemperature("Ute").TakeLast(5).Reverse(), d => $"{d.AvgTemp:F1}°C", Color.Blue);
-            ShowTopDays("DRIEST", _analysisService.SortByHumidity("Ute").Take(5), d => $"{d.AvgHumidity:F1}%", Color.Yellow);
-            ShowTopDays("MOST HUMID", _analysisService.SortByHumidity("Ute").TakeLast(5).Reverse(), d => $"{d.AvgHumidity:F1}%", Color.Aqua);
-            ShowTopDays("HIGHEST MOLD RISK", _analysisService.SortByMoldRisk("Ute").TakeLast(5).Reverse(), d => $"Risk: {d.MoldRisk:F1}", Color.Red);
-            ShowTopDays("LOWEST MOLD RISK", _analysisService.SortByMoldRisk("Ute").Take(5), d => $"Risk: {d.MoldRisk:F1}", Color.Green);
+            ShowTopDays("VARMASTE DAGARNA", _analysisService.SortByTemperature("Ute").Take(5), d => $"{d.AvgTemp:F1}°C", Color.Orange1);
+            ShowTopDays("KALLASTE DAGARNA", _analysisService.SortByTemperature("Ute").TakeLast(5).Reverse(), d => $"{d.AvgTemp:F1}°C", Color.Blue);
+            ShowTopDays("TORRASTE DAGARNA", _analysisService.SortByHumidity("Ute").Take(5), d => $"{d.AvgHumidity:F1}%", Color.Yellow);
+            ShowTopDays("FUKTIGASTE DAGARNA", _analysisService.SortByHumidity("Ute").TakeLast(5).Reverse(), d => $"{d.AvgHumidity:F1}%", Color.Aqua);
+            ShowTopDays("HÖGST MÖGELRISK", _analysisService.SortByMoldRisk("Ute").TakeLast(5).Reverse(), d => $"Risk: {d.MoldRisk:F1}", Color.Red);
+            ShowTopDays("LÄGST MÖGELRISK", _analysisService.SortByMoldRisk("Ute").Take(5), d => $"Risk: {d.MoldRisk:F1}", Color.Green);
             ShowMeteorologicalSeasons();
         }
 
@@ -41,22 +43,23 @@ namespace WeatherDataAnalysis.Presentation
             var firstDate = GetFirstDateForLocation("Inne");
             if (!firstDate.HasValue) return;
 
-            ShowSectionHeader("INDOOR ANALYSIS", Color.Green);
+            ShowSectionHeader("INOMHUSANALYS", Color.Green);
 
             ShowAverageTemperature(firstDate.Value, "Inne");
-            ShowTopDays("WARMEST INDOOR", _analysisService.SortByTemperature("Inne").Take(5), d => $"{d.AvgTemp:F1}°C", Color.Orange1);
-            ShowTopDays("COLDEST INDOOR", _analysisService.SortByTemperature("Inne").TakeLast(5).Reverse(), d => $"{d.AvgTemp:F1}°C", Color.Blue);
-            ShowTopDays("MOST HUMID INDOOR", _analysisService.SortByHumidity("Inne").TakeLast(5).Reverse(), d => $"{d.AvgHumidity:F1}%", Color.Aqua);
-            ShowTopDays("HIGHEST MOLD RISK INDOOR", _analysisService.SortByMoldRisk("Inne").TakeLast(5).Reverse(), d => $"Risk: {d.MoldRisk:F1}", Color.Red);
+            ShowTopDays("VARMASTE DAGARNA INOMHUS", _analysisService.SortByTemperature("Inne").Take(5), d => $"{d.AvgTemp:F1}°C", Color.Orange1);
+            ShowTopDays("KALLASTE DAGARNA INOMHUS", _analysisService.SortByTemperature("Inne").TakeLast(5).Reverse(), d => $"{d.AvgTemp:F1}°C", Color.Blue);
+            ShowTopDays("FUKTIGASTE DAGARNA INOMHUS", _analysisService.SortByHumidity("Inne").TakeLast(5).Reverse(), d => $"{d.AvgHumidity:F1}%", Color.Aqua);
+            ShowTopDays("HÖGST MÖGELRISK INOMHUS", _analysisService.SortByMoldRisk("Inne").TakeLast(5).Reverse(), d => $"Risk: {d.MoldRisk:F1}", Color.Red);
         }
+
         public void ShowBalconyDoorAnalysis()
         {
-            ShowSectionHeader("BALCONY DOOR ANALYSIS (BONUS)", Color.Purple);
+            ShowSectionHeader("BALKONGDÖRR-ANALYS", Color.Purple);
 
             var pairs = GetIndoorOutdoorPairs();
             if (!pairs.Any())
             {
-                AnsiConsole.MarkupLine("[grey]No paired measurements found[/]");
+                AnsiConsole.MarkupLine("[grey]Inga parade mätningar hittades[/]");
                 return;
             }
 
@@ -76,15 +79,15 @@ namespace WeatherDataAnalysis.Presentation
 
             if (!doorOpenDays.Any())
             {
-                AnsiConsole.MarkupLine("[grey]No estimated door opening events found[/]");
+                AnsiConsole.MarkupLine("[grey]Inga uppskattade dörröppningar hittades[/]");
                 return;
             }
 
-            AnsiConsole.MarkupLine("[bold purple]TOP 5 DAYS WITH MOST ESTIMATED DOOR OPENINGS[/]");
+            AnsiConsole.MarkupLine("[bold purple]TOPP 5 DAGAR MED MEST UPPSKATTADE DÖRRÖPPNINGAR[/]");
             int rank = 1;
             foreach (var day in doorOpenDays)
             {
-                AnsiConsole.MarkupLine($"  [grey]{rank}.[/] {day.Date:yyyy-MM-dd} - [purple]{day.OpenEvents} estimated openings[/]");
+                AnsiConsole.MarkupLine($"  [grey]{rank}.[/] {day.Date:yyyy-MM-dd} - [purple]{day.OpenEvents} uppskattade öppningar[/]");
                 rank++;
             }
             AnsiConsole.WriteLine();
@@ -92,7 +95,7 @@ namespace WeatherDataAnalysis.Presentation
 
         public void ShowTemperatureDifferenceAnalysis()
         {
-            ShowSectionHeader("TEMPERATURE DIFFERENCE ANALYSIS (BONUS)", Color.Teal);
+            ShowSectionHeader("TEMPERATURSKILLNADS-ANALYS", Color.Teal);
 
             var daily = _context.Measurements
                 .Where(m => m.Temperature.HasValue && (m.Location == "Inne" || m.Location == "Ute"))
@@ -119,31 +122,30 @@ namespace WeatherDataAnalysis.Presentation
 
             if (!joined.Any())
             {
-                AnsiConsole.MarkupLine("[grey]No data found[/]");
+                AnsiConsole.MarkupLine("[grey]Ingen data hittades[/]");
                 return;
             }
 
-            AnsiConsole.MarkupLine("[bold teal]TOP 5 DAYS WITH SMALLEST TEMPERATURE DIFFERENCE[/]");
+            AnsiConsole.MarkupLine("[bold teal]TOPP 5 DAGAR MED MINST TEMPERATURSKILLNAD[/]");
             var smallest = joined.OrderBy(d => d.Diff).Take(5);
             int rank = 1;
             foreach (var day in smallest)
             {
-                AnsiConsole.MarkupLine($"  [grey]{rank}.[/] {day.Date:yyyy-MM-dd} - [teal]Diff: {day.Diff:F1}°C[/] (Indoor: {day.IndoorTemp:F1}°C, Outdoor: {day.OutdoorTemp:F1}°C)");
+                AnsiConsole.MarkupLine($"  [grey]{rank}.[/] {day.Date:yyyy-MM-dd} - [teal]Skillnad: {day.Diff:F1}°C[/] (Inne: {day.IndoorTemp:F1}°C, Ute: {day.OutdoorTemp:F1}°C)");
                 rank++;
             }
             AnsiConsole.WriteLine();
 
-            AnsiConsole.MarkupLine("[bold orange1]TOP 5 DAYS WITH LARGEST TEMPERATURE DIFFERENCE[/]");
+            AnsiConsole.MarkupLine("[bold orange1]TOPP 5 DAGAR MED STÖRST TEMPERATURSKILLNAD[/]");
             var largest = joined.OrderByDescending(d => d.Diff).Take(5);
             rank = 1;
             foreach (var day in largest)
             {
-                AnsiConsole.MarkupLine($"  [grey]{rank}.[/] {day.Date:yyyy-MM-dd} - [orange1]Diff: {day.Diff:F1}°C[/] (Indoor: {day.IndoorTemp:F1}°C, Outdoor: {day.OutdoorTemp:F1}°C)");
+                AnsiConsole.MarkupLine($"  [grey]{rank}.[/] {day.Date:yyyy-MM-dd} - [orange1]Skillnad: {day.Diff:F1}°C[/] (Inne: {day.IndoorTemp:F1}°C, Ute: {day.OutdoorTemp:F1}°C)");
                 rank++;
             }
             AnsiConsole.WriteLine();
         }
-
         private DateTime? GetFirstDateForLocation(string location)
         {
             var dates = _context.Measurements
@@ -167,13 +169,13 @@ namespace WeatherDataAnalysis.Presentation
             var avgTemp = _analysisService.GetAverageTemperature(date, location);
             if (avgTemp.HasValue)
             {
-                AnsiConsole.MarkupLine($"[cyan]Average temperature on {date:yyyy-MM-dd}:[/] [white]{avgTemp:F1}°C[/]\n");
+                AnsiConsole.MarkupLine($"[cyan]Medeltemperatur den {date:yyyy-MM-dd}:[/] [white]{avgTemp:F1}°C[/]\n");
             }
         }
 
         private void ShowTopDays<T>(string title, System.Collections.Generic.IEnumerable<T> data, Func<T, string> valueFormatter, Color color)
         {
-            AnsiConsole.MarkupLine($"[bold {color}]TOP 5 {title}[/]");
+            AnsiConsole.MarkupLine($"[bold {color}]TOPP 5 {title}[/]");
             int rank = 1;
             foreach (var item in data)
             {
@@ -191,19 +193,19 @@ namespace WeatherDataAnalysis.Presentation
 
         private void ShowMeteorologicalSeasons()
         {
-            AnsiConsole.MarkupLine("[bold yellow]METEOROLOGICAL SEASONS[/]");
+            AnsiConsole.MarkupLine("[bold yellow]METEOROLOGISKA ÅRSTIDER[/]");
             var autumnDate = _analysisService.FindMeteorologicalAutumn();
             var winterDate = _analysisService.FindMeteorologicalWinter();
 
             if (autumnDate.HasValue)
-                AnsiConsole.MarkupLine($"  [green]Autumn started:[/] {autumnDate.Value:yyyy-MM-dd}");
+                AnsiConsole.MarkupLine($"  [green]Hösten började:[/] {autumnDate.Value:yyyy-MM-dd}");
             else
-                AnsiConsole.MarkupLine("  [grey]Autumn: Not found[/]");
+                AnsiConsole.MarkupLine("  [grey]Höst: Hittades inte i datasetet[/]");
 
             if (winterDate.HasValue)
-                AnsiConsole.MarkupLine($"  [blue]Winter started:[/] {winterDate.Value:yyyy-MM-dd}");
+                AnsiConsole.MarkupLine($"  [blue]Vintern började:[/] {winterDate.Value:yyyy-MM-dd}");
             else
-                AnsiConsole.MarkupLine("  [grey]Winter: Not found (mild winter 2016)[/]");
+                AnsiConsole.MarkupLine("  [grey]Vinter: Hittades inte (mild vinter 2016)[/]");
 
             AnsiConsole.WriteLine();
         }
