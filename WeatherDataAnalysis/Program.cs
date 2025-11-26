@@ -127,7 +127,7 @@ namespace WeatherDataAnalysis
                         presenter.ShowTemperatureDifferenceAnalysis();
                         break;
                     case '6':
-                        AnsiConsole.MarkupLine("\n[yellow]Avslutar programmet...[/]");
+                        AnsiConsole.MarkupLine("[yellow]Avslutar programmet...[/]");
                         return;
                 }
 
