@@ -58,21 +58,6 @@ Model Layer         → Measurement.cs (entities)
 - Single Responsibility Principle
 - Clean Code
 
-## Quick Start
-
-```bash
-# Clone the repository
-git clone [repo-url]
-
-# Navigate to project
-cd WeatherDataAnalysis
-
-# Place TempFuktData.csv in project root
-
-# Run
-dotnet run
-```
-
 ## Learning Outcomes
 
 - Entity Framework Code First approach
